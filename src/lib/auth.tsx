@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, fullName: string, academic?: { department: string; year: string }) => Promise<{ error: string | null; requiresConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -69,24 +69,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const signUp = useCallback(async (email: string, password: string, fullName: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
-
-    // Create profile row
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-          email,
-        });
-      if (profileError) {
-        return { error: profileError.message };
-      }
+  const signUp = useCallback(async (email: string, password: string, fullName: string, academic?: { department: string; year: string }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName, department: academic?.department, year: academic?.year } },
+    });
+    if (error) {
+      const message = error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('email rate')
+        ? 'Supabase has temporarily limited confirmation emails. Wait a few minutes, then try again, or disable email confirmation while testing in Supabase Auth settings.'
+        : error.message;
+      return { error: message, requiresConfirmation: false };
     }
-    return { error: null };
+    return { error: null, requiresConfirmation: !data.session };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {

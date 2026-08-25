@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Mail, Lock, User, ArrowRight, ArrowLeft, GraduationCap, AlertCircle } from 'lucide-react';
+import { Users, Mail, Lock, User, ArrowRight, ArrowLeft, GraduationCap, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useNav } from '@/nav';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +16,7 @@ export function SignUpPage() {
   const [year, setYear] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmationRequired, setConfirmationRequired] = useState(false);
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +24,16 @@ export function SignUpPage() {
     setSubmitting(true);
 
     // Sign up the user
-    const { error: signUpError } = await signUp(email, password, name);
+    const { error: signUpError, requiresConfirmation } = await signUp(email, password, name, { department, year });
     if (signUpError) {
       setError(signUpError);
       setSubmitting(false);
+      return;
+    }
+
+    if (requiresConfirmation) {
+      setSubmitting(false);
+      setConfirmationRequired(true);
       return;
     }
 
@@ -41,14 +48,31 @@ export function SignUpPage() {
     // Update profile with department/year
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ department, year })
         .eq('id', user.id);
+      if (profileError) {
+        setError(profileError.message);
+        return;
+      }
     }
 
     navigate({ name: 'dashboard' });
   };
+
+  if (confirmationRequired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-ink-50 px-6">
+        <div className="card w-full max-w-md p-8 text-center">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-brand-600" />
+          <h1 className="mt-4 font-display text-2xl font-700 text-ink-900">Check your email</h1>
+          <p className="mt-3 text-sm leading-relaxed text-ink-500">We sent a confirmation link to <strong>{email}</strong>. Confirm it first, then log in to finish setting up your academic information.</p>
+          <button onClick={() => navigate({ name: 'login' })} className="btn-primary mt-6 w-full">Go to log in <ArrowRight className="h-4 w-4" /></button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
