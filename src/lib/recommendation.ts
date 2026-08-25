@@ -1,4 +1,4 @@
-import type { Student, Project, ProjectRequirement, UserSkillDisplay, Availability, WorkStyle, Role } from '@/types';
+import type { Student, Project, ProjectRequirement, UserSkillDisplay, WorkStyle } from '@/types';
 
 // ============ Weights ============
 export const WEIGHTS = {
@@ -27,6 +27,8 @@ export interface RecommendationResult {
   concerns: string[];
   explanation: string;
 }
+
+type RecommendationComponents = Omit<RecommendationResult, 'explanation' | 'strengths' | 'concerns'>;
 
 export interface StudentRecommendation {
   student: Student;
@@ -210,7 +212,7 @@ function scoreSkillEvidence(student: Student): number {
 function generateExplanation(
   student: Student,
   project: Project,
-  result: Omit<RecommendationResult, 'explanation'>,
+  result: RecommendationComponents,
 ): string {
   const parts: string[] = [];
 
@@ -247,7 +249,7 @@ function generateExplanation(
   return explanation;
 }
 
-function generateStrengths(student: Student, project: Project, result: Omit<RecommendationResult, 'explanation'>): string[] {
+function generateStrengths(student: Student, project: Project, result: RecommendationComponents): string[] {
   const strengths: string[] = [];
 
   if (result.skillScore >= 75) strengths.push(`Strong coverage of required skills (${result.matchedSkills.length} matched)`);
@@ -269,7 +271,7 @@ function generateStrengths(student: Student, project: Project, result: Omit<Reco
   return strengths;
 }
 
-function generateConcerns(student: Student, project: Project, result: Omit<RecommendationResult, 'explanation'>): string[] {
+function generateConcerns(student: Student, project: Project, result: RecommendationComponents): string[] {
   const concerns: string[] = [];
 
   if (result.missingSkills.length > 0) {

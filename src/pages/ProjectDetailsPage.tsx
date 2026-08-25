@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Clock, Users, Calendar, Tag, UserPlus, ArrowRight, AlertCircle, Edit3, Check, X, UserMinus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Clock, Users, Calendar, Tag, UserPlus, ArrowRight, AlertCircle, Edit3, Check, X, UserMinus, Sparkles } from 'lucide-react';
 import { useNav } from '@/nav';
 import { useAuth } from '@/lib/auth';
 import { PageContainer, PageHeader, SectionHeader, EmptyState } from '@/components/Layout';
@@ -33,7 +33,7 @@ export function ProjectDetailsPage({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const data = await fetchProjectById(id);
       if (!data) {
@@ -48,11 +48,11 @@ export function ProjectDetailsPage({ id }: { id: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   const isOwner = user?.id === project?.ownerId;
   const myMembership = members.find((m) => m.userId === user?.id);
@@ -312,6 +312,9 @@ export function ProjectDetailsPage({ id }: { id: string }) {
                 <UserPlus className="w-4 h-4" /> {joining ? 'Sending request…' : 'Request to join'}
               </button>
             )}
+            <button onClick={() => navigate({ name: 'generate-team', id: project.id })} className="btn-secondary w-full">
+              <Sparkles className="w-4 h-4" /> Generate team
+            </button>
             <button className="btn-secondary w-full">
               Save project <ArrowRight className="w-4 h-4" />
             </button>

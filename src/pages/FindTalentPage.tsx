@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Sparkles, AlertCircle, Filter, X } from 'lucide-react';
+import { Search, Sparkles, AlertCircle } from 'lucide-react';
 import { PageContainer, PageHeader, EmptyState } from '@/components/Layout';
 import { SearchBar } from '@/components/SearchBar';
 import { StudentCard } from '@/components/StudentCard';

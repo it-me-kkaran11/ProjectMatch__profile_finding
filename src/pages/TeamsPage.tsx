@@ -1,5 +1,8 @@
 import { Plus, AlertTriangle, Users } from 'lucide-react';
-import { teams, skillGaps } from '@/data/mockData';
+import { useEffect, useState } from 'react';
+import { fetchTeamsForUser } from '@/lib/db';
+import { useAuth } from '@/lib/auth';
+import type { Team } from '@/types';
 import { useNav } from '@/nav';
 import { PageContainer, PageHeader, EmptyState } from '@/components/Layout';
 import { cn } from '@/utils/cn';
@@ -13,6 +16,26 @@ const statusStyles: Record<string, string> = {
 
 export function TeamsPage() {
   const { navigate } = useNav();
+  const { user } = useAuth();
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchTeamsForUser(user.id)
+      .then(setTeams)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load teams'))
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (loading) {
+    return <PageContainer><PageHeader title="My Teams" subtitle="Teams you're building with" back={false} /><div className="card p-12 text-center"><p className="text-sm text-ink-500">Loading teams...</p></div></PageContainer>;
+  }
+
+  if (error) {
+    return <PageContainer><PageHeader title="My Teams" subtitle="Teams you're building with" back={false} /><div className="card p-8 text-sm text-rose-600">{error}</div></PageContainer>;
+  }
 
   return (
     <PageContainer>
@@ -96,34 +119,21 @@ export function TeamsPage() {
       )}
 
       {/* Skill gaps summary */}
-      {skillGaps.length > 0 && (
+      {teams.some((team) => team.missingSkills.length > 0) && (
         <div className="mt-8">
           <h2 className="font-700 text-lg text-ink-900 mb-4">All Skill Gaps</h2>
           <div className="card p-5">
             <div className="space-y-3">
-              {skillGaps.map((gap) => (
-                <div key={gap.id} className="flex items-center justify-between py-2 border-b border-ink-100 last:border-0">
+              {teams.flatMap((team) => team.missingSkills.map((skill) => ({ team, skill }))).map(({ team, skill }) => (
+                <div key={`${team.id}-${skill}`} className="flex items-center justify-between py-2 border-b border-ink-100 last:border-0">
                   <div className="flex items-center gap-3">
-                    <span className={cn('w-2 h-2 rounded-full',
-                      gap.severity === 'High' ? 'bg-rose-500' :
-                      gap.severity === 'Medium' ? 'bg-accent-500' :
-                      'bg-ink-300'
-                    )} />
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
                     <div>
-                      <p className="text-sm font-600 text-ink-900">{gap.skill}</p>
-                      <p className="text-xs text-ink-400">{gap.teamName}</p>
+                      <p className="text-sm font-600 text-ink-900">{skill}</p>
+                      <p className="text-xs text-ink-400">{team.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-ink-400">{gap.suggestedStudents} suggested students</span>
-                    <span className={cn('chip text-[11px]',
-                      gap.severity === 'High' ? 'bg-rose-50 text-rose-700' :
-                      gap.severity === 'Medium' ? 'bg-accent-50 text-accent-700' :
-                      'bg-ink-100 text-ink-600'
-                    )}>
-                      {gap.severity}
-                    </span>
-                  </div>
+                  <span className="chip bg-rose-50 text-rose-700 text-[11px]">Needs coverage</span>
                 </div>
               ))}
             </div>

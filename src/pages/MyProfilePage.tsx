@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Edit3, Settings, LogOut, X, Save, AlertCircle } from 'lucide-react';
+import { Edit3, LogOut, X, Save, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase, type Profile } from '@/lib/supabase';
 import { PageContainer, PageHeader } from '@/components/Layout';
 import { ProfileHeader } from '@/components/ProfileHeader';
 import { AvailabilityCard } from '@/components/AvailabilityCard';
-import { SkillBadge } from '@/components/SkillBadge';
-import { useNav } from '@/nav';
-import type { Student, Availability, WorkStyle, Role } from '@/types';
-import { allDepartments, allYears, allWorkStyles, allAvailabilities, allRoles } from '@/data/mockData';
+import type { Student, WorkStyle, Role } from '@/types';
+import { allDepartments, allYears, allWorkStyles, allRoles } from '@/data/mockData';
 
 function profileToStudent(p: Profile): Student {
   const initials = p.full_name
@@ -42,7 +40,6 @@ function profileToStudent(p: Profile): Student {
 }
 
 export function MyProfilePage() {
-  const { navigate } = useNav();
   const { profile, user, signOut, refreshProfile } = useAuth();
   const [student, setStudent] = useState<Student | null>(null);
   const [editing, setEditing] = useState(false);

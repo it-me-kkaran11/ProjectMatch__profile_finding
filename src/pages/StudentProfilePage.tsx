@@ -164,7 +164,7 @@ export function StudentProfilePage({ id }: { id: string }) {
               <h3 className="font-600 text-sm text-ink-900">Weekly Schedule</h3>
             </div>
             <div className="space-y-1.5">
-              {DAYS_OF_WEEK.map((day, i) => {
+              {DAYS_OF_WEEK.map(() => {
                 // We don't have blocks here since they're not in the Student type
                 return null;
               })}

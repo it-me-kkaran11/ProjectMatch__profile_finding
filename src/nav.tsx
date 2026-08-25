@@ -6,11 +6,13 @@ export type Route =
   | { name: 'signup' }
   | { name: 'dashboard' }
   | { name: 'discover' }
+  | { name: 'find-talent' }
   | { name: 'student'; id: string }
   | { name: 'projects' }
   | { name: 'project'; id: string }
   | { name: 'create-project' }
   | { name: 'edit-project'; id: string }
+  | { name: 'generate-team'; id: string }
   | { name: 'teams' }
   | { name: 'team'; id: string }
   | { name: 'profile' };

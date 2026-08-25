@@ -6,20 +6,35 @@ import { LoginPage } from '@/pages/LoginPage';
 import { SignUpPage } from '@/pages/SignUpPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { DiscoverPage } from '@/pages/DiscoverPage';
+import { FindTalentPage } from '@/pages/FindTalentPage';
 import { StudentProfilePage } from '@/pages/StudentProfilePage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { ProjectDetailsPage } from '@/pages/ProjectDetailsPage';
 import { CreateProjectPage } from '@/pages/CreateProjectPage';
 import { EditProjectPage } from '@/pages/EditProjectPage';
+import { GenerateTeamPage } from '@/pages/GenerateTeamPage';
 import { TeamsPage } from '@/pages/TeamsPage';
 import { TeamDetailsPage } from '@/pages/TeamDetailsPage';
 import { MyProfilePage } from '@/pages/MyProfilePage';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 const publicRoutes = ['landing', 'login', 'signup'];
 
 function AppShell() {
   const { route, navigate } = useNav();
   const { user, loading } = useAuth();
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-ink-50 p-6">
+        <div className="card w-full max-w-lg p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-lg font-800 text-white">PM</div>
+          <h1 className="font-display text-2xl font-700 text-ink-900">Connect ProjectMatch to Supabase</h1>
+          <p className="mt-3 text-sm leading-relaxed text-ink-500">The preview is running, but the Supabase environment variables are missing. Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to a local <code>.env</code> file, then restart Vite.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -64,11 +79,13 @@ function AppShell() {
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         {route.name === 'dashboard' && <DashboardPage />}
         {route.name === 'discover' && <DiscoverPage />}
+        {route.name === 'find-talent' && <FindTalentPage />}
         {route.name === 'student' && <StudentProfilePage id={route.id} />}
         {route.name === 'projects' && <ProjectsPage />}
         {route.name === 'project' && <ProjectDetailsPage id={route.id} />}
         {route.name === 'create-project' && <CreateProjectPage />}
         {route.name === 'edit-project' && <EditProjectPage id={route.id} />}
+        {route.name === 'generate-team' && <GenerateTeamPage id={route.id} />}
         {route.name === 'teams' && <TeamsPage />}
         {route.name === 'team' && <TeamDetailsPage id={route.id} />}
         {route.name === 'profile' && <MyProfilePage />}

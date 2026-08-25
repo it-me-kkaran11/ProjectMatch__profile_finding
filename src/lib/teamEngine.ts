@@ -1,4 +1,4 @@
-import type { Student, Project, ProjectRequirement, Role } from '@/types';
+import type { Student, Project, ProjectRequirement } from '@/types';
 import { scoreStudentForProject, type RecommendationResult } from '@/lib/recommendation';
 
 // ============ Types ============
@@ -439,7 +439,6 @@ export function simulateChange(
   replacedId: string | undefined,
   project: Project,
   requirements: ProjectRequirement[],
-  allStudents: Student[],
 ): WhatIfChange {
   const beforeScores = scoreTeam(currentMembers, project, requirements);
   let newMembers = [...currentMembers];

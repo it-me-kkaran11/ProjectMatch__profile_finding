@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useNav, type Route } from '@/nav';
+import { useNav } from '@/nav';
 import { ArrowLeft } from 'lucide-react';
 
 export function PageHeader({

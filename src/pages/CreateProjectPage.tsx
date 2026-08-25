@@ -3,7 +3,6 @@ import { Plus, X, ArrowRight, Check, AlertCircle, Trash2 } from 'lucide-react';
 import { useNav } from '@/nav';
 import { useAuth } from '@/lib/auth';
 import { PageContainer, PageHeader } from '@/components/Layout';
-import { cn } from '@/utils/cn';
 import { fetchAllSkills, createProject, PROJECT_CATEGORIES, PROFICIENCY_LABELS, IMPORTANCE_LEVELS } from '@/lib/db';
 import type { ProjectCategory, Role } from '@/types';
 

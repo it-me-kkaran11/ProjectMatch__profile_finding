@@ -4,7 +4,6 @@ import { cn } from '@/utils/cn';
 
 export function SkillCoverage({ skills, missingSkills }: { skills: SkillCoverageItem[]; missingSkills: string[] }) {
   const covered = skills.filter((s) => s.covered);
-  const uncovered = skills.filter((s) => !s.covered);
   const coveragePercent = skills.length > 0 ? Math.round((covered.length / skills.length) * 100) : 0;
 
   return (

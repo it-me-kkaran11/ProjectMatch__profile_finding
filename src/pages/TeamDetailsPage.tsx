@@ -1,11 +1,16 @@
-import { Sparkles, Heart, Clock, ArrowRight, UserPlus } from 'lucide-react';
-import { teams, students } from '@/data/mockData';
+import { Sparkles, Heart, Clock, ArrowRight, UserPlus, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { fetchAllStudents, fetchProjectById, fetchTeamsForUser } from '@/lib/db';
+import { useAuth } from '@/lib/auth';
 import { useNav } from '@/nav';
 import { PageContainer, PageHeader, SectionHeader } from '@/components/Layout';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
 import { SkillCoverage } from '@/components/SkillCoverage';
 import { StudentCard } from '@/components/StudentCard';
 import { cn } from '@/utils/cn';
+import type { Student, Team } from '@/types';
+import type { ProjectRequirement } from '@/types';
+import { TeamCoverageAnalyzer } from '@/components/TeamCoverageAnalyzer';
 
 const statusStyles: Record<string, string> = {
   Recruiting: 'bg-brand-50 text-brand-700',
@@ -16,7 +21,29 @@ const statusStyles: Record<string, string> = {
 
 export function TeamDetailsPage({ id }: { id: string }) {
   const { navigate } = useNav();
-  const team = teams.find((t) => t.id === id);
+  const { user } = useAuth();
+  const [team, setTeam] = useState<Team | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [requirements, setRequirements] = useState<ProjectRequirement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([fetchTeamsForUser(user.id), fetchAllStudents()])
+      .then(async ([teamData, studentData]) => {
+        const teamDataItem = teamData.find((item) => item.id === id);
+        const projectData = teamDataItem ? await fetchProjectById(teamDataItem.projectId) : null;
+        setTeam(teamDataItem ?? null);
+        setStudents(studentData);
+        setRequirements(projectData?.requirements ?? []);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load team'))
+      .finally(() => setLoading(false));
+  }, [id, user]);
+
+  if (loading) return <PageContainer><div className="card p-12 text-center"><p className="text-sm text-ink-500">Loading team analysis...</p></div></PageContainer>;
+  if (error) return <PageContainer><div className="card p-8 flex items-start gap-3 text-sm text-rose-600"><AlertCircle className="w-4 h-4" />{error}</div></PageContainer>;
 
   if (!team) {
     return (
@@ -92,7 +119,7 @@ export function TeamDetailsPage({ id }: { id: string }) {
                 subtitle="Students who can fill your skill gaps"
                 action={
                   <div className="flex items-center gap-1.5 text-xs text-brand-600 font-600">
-                    <Sparkles className="w-3.5 h-3.5" /> AI-matched
+                    <Sparkles className="w-3.5 h-3.5" /> Deterministic matches
                   </div>
                 }
               />
@@ -121,7 +148,7 @@ export function TeamDetailsPage({ id }: { id: string }) {
             </div>
             <p className="text-xs text-ink-500 leading-relaxed">
               Based on work style alignment, availability overlap, and skill complementarity.
-              Full compatibility analysis coming soon.
+              This score combines availability, role coverage, skill complementarity, and work style.
             </p>
           </div>
 
@@ -148,6 +175,9 @@ export function TeamDetailsPage({ id }: { id: string }) {
             </button>
           </div>
         </div>
+      </div>
+      <div className="mt-6">
+        <TeamCoverageAnalyzer members={students.filter((student) => team.members.some((member) => member.studentId === student.id))} requirements={requirements} />
       </div>
     </PageContainer>
   );

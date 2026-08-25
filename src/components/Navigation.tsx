@@ -1,4 +1,4 @@
-import { Users, Compass, FolderKanban, UsersRound, User, LogOut } from 'lucide-react';
+import { Users, Compass, FolderKanban, UsersRound, User, LogOut, Search } from 'lucide-react';
 import { useNav, type Route } from '@/nav';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/utils/cn';
@@ -6,6 +6,7 @@ import { cn } from '@/utils/cn';
 const navItems: { label: string; icon: typeof Users; route: Route }[] = [
   { label: 'Home', icon: Users, route: { name: 'dashboard' } },
   { label: 'Discover', icon: Compass, route: { name: 'discover' } },
+  { label: 'Find Talent', icon: Search, route: { name: 'find-talent' } },
   { label: 'Projects', icon: FolderKanban, route: { name: 'projects' } },
   { label: 'My Teams', icon: UsersRound, route: { name: 'teams' } },
   { label: 'Profile', icon: User, route: { name: 'profile' } },
@@ -18,6 +19,7 @@ export function Navigation() {
   const isActive = (item: (typeof navItems)[number]) => {
     if (item.route.name === 'dashboard' && (route.name === 'dashboard')) return true;
     if (item.route.name === 'discover' && (route.name === 'discover' || route.name === 'student')) return true;
+    if (item.route.name === 'find-talent' && route.name === 'find-talent') return true;
     if (item.route.name === 'projects' && (route.name === 'projects' || route.name === 'project' || route.name === 'create-project')) return true;
     if (item.route.name === 'teams' && (route.name === 'teams' || route.name === 'team')) return true;
     if (item.route.name === 'profile' && route.name === 'profile') return true;
@@ -78,6 +80,7 @@ export function MobileNav() {
   const isActive = (item: (typeof navItems)[number]) => {
     if (item.route.name === 'dashboard' && route.name === 'dashboard') return true;
     if (item.route.name === 'discover' && (route.name === 'discover' || route.name === 'student')) return true;
+    if (item.route.name === 'find-talent' && route.name === 'find-talent') return true;
     if (item.route.name === 'projects' && (route.name === 'projects' || route.name === 'project' || route.name === 'create-project')) return true;
     if (item.route.name === 'teams' && (route.name === 'teams' || route.name === 'team')) return true;
     if (item.route.name === 'profile' && route.name === 'profile') return true;

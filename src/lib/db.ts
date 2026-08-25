@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { scoreTeam } from '@/lib/teamEngine';
 import type {
   Student,
   UserSkillDisplay,
@@ -6,6 +7,7 @@ import type {
   Project,
   ProjectRequirement,
   ProjectMember,
+  Team,
   Role,
   ProjectCategory,
   ProjectStatus,
@@ -276,6 +278,66 @@ export async function fetchAllProjects(): Promise<Project[]> {
     createdAt: p.created_at,
     matchScore: 0,
   }));
+}
+
+export async function fetchTeamsForUser(userId: string): Promise<Team[]> {
+  const [projects, students] = await Promise.all([fetchAllProjects(), fetchAllStudents()]);
+  const studentMap = new Map(students.map((student) => [student.id, student]));
+  const teams: Team[] = [];
+
+  for (const project of projects) {
+    const detail = await fetchProjectById(project.id);
+    if (!detail) continue;
+
+    const activeMemberIds = new Set([
+      project.ownerId,
+      ...detail.members.filter((member) => member.status === 'member').map((member) => member.userId),
+    ]);
+    if (!activeMemberIds.has(userId)) continue;
+
+    const teamMembers = [...activeMemberIds]
+      .map((memberId) => {
+        const student = studentMap.get(memberId);
+        if (!student) return null;
+        const membership = detail.members.find((member) => member.userId === memberId);
+        return {
+          studentId: student.id,
+          name: student.name,
+          initials: student.initials,
+          avatarColor: student.avatarColor,
+          role: (membership?.role as Role | null) ?? student.preferredRoles[0] ?? 'Researcher',
+          skills: student.skills.map((skill) => skill.skillName),
+          availability: student.availability,
+        };
+      })
+      .filter((member): member is NonNullable<typeof member> => member !== null);
+
+    const skillCoverage = detail.requirements.map((requirement) => {
+      const count = teamMembers.filter((member) => {
+        const student = studentMap.get(member.studentId);
+        return student?.skills.some((skill) => skill.skillName === requirement.skillName && skill.proficiency >= requirement.requiredProficiency) ?? false;
+      }).length;
+      return { skill: requirement.skillName, covered: count >= requirement.peopleNeeded, count };
+    });
+
+    const memberStudents = teamMembers.map((member) => studentMap.get(member.studentId)).filter((student): student is Student => Boolean(student));
+    const score = scoreTeam(memberStudents, project, detail.requirements);
+
+    teams.push({
+      id: project.id,
+      name: `${project.title} Team`,
+      projectId: project.id,
+      projectTitle: project.title,
+      members: teamMembers,
+      status: project.status,
+      createdAt: project.createdAt,
+      skillCoverage,
+      missingSkills: skillCoverage.filter((skill) => !skill.covered).map((skill) => skill.skill),
+      compatibility: score.compatibility,
+    });
+  }
+
+  return teams;
 }
 
 export async function fetchProjectById(id: string): Promise<{

@@ -55,7 +55,7 @@ DROP POLICY IF EXISTS "select_own_profile" ON profiles;
 CREATE POLICY "select_own_profile"
   ON profiles FOR SELECT
   TO authenticated
-  USING (auth.uid() = id);
+  USING (true);
 
 DROP POLICY IF EXISTS "insert_own_profile" ON profiles;
 CREATE POLICY "insert_own_profile"

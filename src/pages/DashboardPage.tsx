@@ -1,18 +1,42 @@
-import { ArrowRight, Sparkles, AlertTriangle, Calendar, TrendingUp, Users, FolderKanban, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNav } from '@/nav';
-import { projects, students, teams, skillGaps, opportunities, currentUser } from '@/data/mockData';
+import { useAuth } from '@/lib/auth';
+import { fetchAllProjects, fetchAllStudents, fetchTeamsForUser } from '@/lib/db';
 import { PageContainer, SectionHeader, StatCard } from '@/components/Layout';
 import { ProjectCard } from '@/components/ProjectCard';
 import { StudentCard } from '@/components/StudentCard';
-import { Avatar } from '@/components/Avatar';
-import { MatchScore } from '@/components/MatchScore';
 import { cn } from '@/utils/cn';
+import type { Project, Student, Team } from '@/types';
 
 export function DashboardPage() {
   const { navigate } = useNav();
-  const myTeams = teams.filter((t) => t.members.some((m) => m.studentId === currentUser.id));
+  const { user, profile } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([fetchAllProjects(), fetchAllStudents(), fetchTeamsForUser(user.id)])
+      .then(([projectData, studentData, teamData]) => {
+        setProjects(projectData);
+        setStudents(studentData);
+        setTeams(teamData);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load dashboard'))
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (loading) return <PageContainer><div className="card p-12 text-center"><p className="text-sm text-ink-500">Loading your workspace...</p></div></PageContainer>;
+  if (error) return <PageContainer><div className="card p-8 text-sm text-rose-600">{error}</div></PageContainer>;
+
+  const myTeams = teams;
+  const skillGaps = teams.flatMap((team) => team.missingSkills.map((skill) => ({ id: `${team.id}-${skill}`, teamName: team.name, skill, severity: 'High' as const, suggestedStudents: 0 })));
   const recommendedProjects = [...projects].sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
-  const recommendedStudents = [...students].filter((s) => s.id !== currentUser.id).sort((a, b) => b.matchScore - a.matchScore).slice(0, 4);
+  const recommendedStudents = [...students].filter((s) => s.id !== user?.id).sort((a, b) => b.matchScore - a.matchScore).slice(0, 4);
 
   return (
     <PageContainer>
@@ -23,7 +47,7 @@ export function DashboardPage() {
         <div className="relative">
           <div className="flex items-center gap-2 text-brand-300 text-sm mb-3">
             <Sparkles className="w-4 h-4" />
-            Welcome back, {currentUser.name.split(' ')[0]}
+            Welcome back, {(profile?.full_name ?? user?.email ?? 'there').split(' ')[0]}
           </div>
           <h1 className="font-display font-800 text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight text-balance">
             Find the right people.
@@ -45,7 +69,7 @@ export function DashboardPage() {
         <StatCard label="Active Teams" value={myTeams.length} hint="You're a member of" color="text-brand-600" />
         <StatCard label="Open Projects" value={projects.filter(p => p.status === 'Recruiting').length} hint="Currently recruiting" color="text-blue-600" />
         <StatCard label="Skill Gaps" value={skillGaps.length} hint="Across your teams" color="text-accent-600" />
-        <StatCard label="Opportunities" value={opportunities.length} hint="Upcoming deadlines" color="text-ink-900" />
+        <StatCard label="Students" value={students.length} hint="In the talent directory" color="text-ink-900" />
       </div>
 
       {/* My Active Teams */}
@@ -146,7 +170,10 @@ export function DashboardPage() {
       {/* Upcoming Opportunities */}
       <section>
         <SectionHeader title="Upcoming Opportunities" subtitle="Hackathons, grants, and competitions" />
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="card p-6 text-sm text-ink-500">
+          Opportunity listings are not connected to the database yet. Your projects and team gaps above are live.
+        </div>
+        {/* <div className="grid sm:grid-cols-2 gap-4">
           {opportunities.map((opp) => (
             <div key={opp.id} className="card card-hover p-5">
               <div className="flex items-start justify-between mb-3">
@@ -175,7 +202,7 @@ export function DashboardPage() {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
       </section>
     </PageContainer>
   );
