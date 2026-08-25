@@ -69,7 +69,7 @@ export async function fetchAllStudents(): Promise<Student[]> {
   // Fetch profiles
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')
-    .select('id, full_name, email, department, year, bio, interests, preferred_roles, work_style')
+    .select('id, full_name, email, department, year, bio, interests, preferred_roles, work_style, communication_preference, collaboration_preference, leadership_preference, available_hours_per_week, preferred_project_duration_weeks')
     .order('full_name');
   if (profileError) throw profileError;
   if (!profiles || profiles.length === 0) return [];
@@ -80,6 +80,15 @@ export async function fetchAllStudents(): Promise<Student[]> {
     .select('id, user_id, skill_id, proficiency, years_experience, evidence_status, skills(name)')
     .order('proficiency', { ascending: false });
   if (skillsError) throw skillsError;
+
+  const skillIds = (userSkills ?? []).map((skill) => skill.id);
+  const { data: evidence } = skillIds.length ? await supabase.from('skill_evidence').select('user_skill_id, evidence_type').in('user_skill_id', skillIds) : { data: [] };
+  const evidenceBySkill = new Map<string, { project: number; portfolio: number }>();
+  for (const item of evidence ?? []) {
+    const counts = evidenceBySkill.get(item.user_skill_id) ?? { project: 0, portfolio: 0 };
+    counts[item.evidence_type === 'portfolio' ? 'portfolio' : 'project'] += 1;
+    evidenceBySkill.set(item.user_skill_id, counts);
+  }
 
   // Fetch all availability blocks
   const { data: availability, error: availError } = await supabase
@@ -99,6 +108,8 @@ export async function fetchAllStudents(): Promise<Student[]> {
       proficiency: us.proficiency,
       yearsExperience: Number(us.years_experience),
       evidenceStatus: us.evidence_status,
+      projectEvidenceCount: evidenceBySkill.get(us.id)?.project ?? 0,
+      portfolioEvidenceCount: evidenceBySkill.get(us.id)?.portfolio ?? 0,
     });
     skillsByUser.set(us.user_id, arr);
   }
@@ -132,6 +143,11 @@ export async function fetchAllStudents(): Promise<Student[]> {
       preferredRoles: (p.preferred_roles ?? []) as Role[],
       availability: deriveAvailability(blocks),
       workStyle: (p.work_style as Student['workStyle']) ?? 'Collaborative',
+      communicationPreference: p.communication_preference,
+      collaborationPreference: p.collaboration_preference,
+      leadershipPreference: p.leadership_preference,
+      availableHoursPerWeek: p.available_hours_per_week ? Number(p.available_hours_per_week) : undefined,
+      preferredProjectDurationWeeks: p.preferred_project_duration_weeks ?? undefined,
       experience: [],
       projects: [],
       matchScore: 0,
@@ -143,7 +159,7 @@ export async function fetchAllStudents(): Promise<Student[]> {
 export async function fetchStudentById(id: string): Promise<Student | null> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, department, year, bio, interests, preferred_roles, work_style')
+    .select('id, full_name, email, department, year, bio, interests, preferred_roles, work_style, communication_preference, collaboration_preference, leadership_preference, available_hours_per_week, preferred_project_duration_weeks')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
@@ -156,6 +172,15 @@ export async function fetchStudentById(id: string): Promise<Student | null> {
     .eq('user_id', id)
     .order('proficiency', { ascending: false });
   if (skillsError) throw skillsError;
+
+  const skillIds = (userSkills ?? []).map((skill) => skill.id);
+  const { data: evidence } = skillIds.length ? await supabase.from('skill_evidence').select('user_skill_id, evidence_type').in('user_skill_id', skillIds) : { data: [] };
+  const evidenceBySkill = new Map<string, { project: number; portfolio: number }>();
+  for (const item of evidence ?? []) {
+    const counts = evidenceBySkill.get(item.user_skill_id) ?? { project: 0, portfolio: 0 };
+    counts[item.evidence_type === 'portfolio' ? 'portfolio' : 'project'] += 1;
+    evidenceBySkill.set(item.user_skill_id, counts);
+  }
 
   // Fetch availability
   const { data: availability, error: availError } = await supabase
@@ -171,6 +196,8 @@ export async function fetchStudentById(id: string): Promise<Student | null> {
     proficiency: us.proficiency,
     yearsExperience: Number(us.years_experience),
     evidenceStatus: us.evidence_status,
+    projectEvidenceCount: evidenceBySkill.get(us.id)?.project ?? 0,
+    portfolioEvidenceCount: evidenceBySkill.get(us.id)?.portfolio ?? 0,
   }));
 
   const blocks: AvailabilityBlock[] = (availability ?? []).map((a) => ({
@@ -193,6 +220,11 @@ export async function fetchStudentById(id: string): Promise<Student | null> {
     preferredRoles: (profile.preferred_roles ?? []) as Role[],
     availability: deriveAvailability(blocks),
     workStyle: (profile.work_style as Student['workStyle']) ?? 'Collaborative',
+    communicationPreference: profile.communication_preference,
+    collaborationPreference: profile.collaboration_preference,
+    leadershipPreference: profile.leadership_preference,
+    availableHoursPerWeek: profile.available_hours_per_week ? Number(profile.available_hours_per_week) : undefined,
+    preferredProjectDurationWeeks: profile.preferred_project_duration_weeks ?? undefined,
     experience: [],
     projects: [],
     matchScore: 0,
@@ -218,7 +250,7 @@ function deriveAvailability(blocks: AvailabilityBlock[]): Availability {
 export async function fetchAllProjects(): Promise<Project[]> {
   const { data: projects, error } = await supabase
     .from('projects')
-    .select('id, creator_id, title, tagline, description, category, status, team_size, timeline, preferred_availability, preferred_roles, created_at')
+    .select('id, creator_id, title, tagline, description, category, status, team_size, timeline, preferred_availability, preferred_roles, expected_hours_per_week, duration_weeks, deadline_intensity, created_at')
     .order('created_at', { ascending: false });
   if (error) throw error;
   if (!projects || projects.length === 0) return [];
@@ -272,6 +304,9 @@ export async function fetchAllProjects(): Promise<Project[]> {
     teamSize: p.team_size,
     currentMembers: (memberCountByProject.get(p.id) ?? 0) + 1, // +1 for creator
     timeline: p.timeline ?? '',
+    expectedHoursPerWeek: p.expected_hours_per_week ? Number(p.expected_hours_per_week) : undefined,
+    durationWeeks: p.duration_weeks ?? undefined,
+    deadlineIntensity: p.deadline_intensity,
     availabilityReq: (p.preferred_availability as Availability) ?? 'Part-time',
     ownerId: p.creator_id,
     ownerName: creatorMap.get(p.creator_id) ?? 'Unknown',
@@ -347,7 +382,7 @@ export async function fetchProjectById(id: string): Promise<{
 } | null> {
   const { data: project, error } = await supabase
     .from('projects')
-    .select('id, creator_id, title, tagline, description, category, status, team_size, timeline, preferred_availability, preferred_roles, created_at')
+    .select('id, creator_id, title, tagline, description, category, status, team_size, timeline, preferred_availability, preferred_roles, expected_hours_per_week, duration_weeks, deadline_intensity, created_at')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
@@ -423,6 +458,9 @@ export async function fetchProjectById(id: string): Promise<{
     teamSize: project.team_size,
     currentMembers: memberData.filter((m) => m.status === 'member').length + 1,
     timeline: project.timeline ?? '',
+    expectedHoursPerWeek: project.expected_hours_per_week ? Number(project.expected_hours_per_week) : undefined,
+    durationWeeks: project.duration_weeks ?? undefined,
+    deadlineIntensity: project.deadline_intensity,
     availabilityReq: (project.preferred_availability as Availability) ?? 'Part-time',
     ownerId: project.creator_id,
     ownerName: creator?.full_name ?? 'Unknown',
@@ -445,6 +483,9 @@ export async function createProject(
     timeline: string;
     preferredAvailability: string;
     preferredRoles: string[];
+    expectedHoursPerWeek?: number;
+    durationWeeks?: number;
+    deadlineIntensity?: string;
     requirements: { skillId: string; requiredProficiency: number; importance: string; peopleNeeded: number }[];
   },
   creatorId: string,
@@ -461,6 +502,9 @@ export async function createProject(
       timeline: data.timeline,
       preferred_availability: data.preferredAvailability,
       preferred_roles: data.preferredRoles,
+      expected_hours_per_week: data.expectedHoursPerWeek || null,
+      duration_weeks: data.durationWeeks || null,
+      deadline_intensity: data.deadlineIntensity || null,
       status: 'Recruiting',
     })
     .select('id')
@@ -505,6 +549,9 @@ export async function updateProject(
     preferredRoles: string[];
     status: ProjectStatus;
     requirements: { skillId: string; requiredProficiency: number; importance: string; peopleNeeded: number }[];
+    expectedHoursPerWeek?: number;
+    durationWeeks?: number;
+    deadlineIntensity?: string;
   },
 ): Promise<void> {
   const { error } = await supabase
@@ -519,6 +566,9 @@ export async function updateProject(
       preferred_availability: data.preferredAvailability,
       preferred_roles: data.preferredRoles,
       status: data.status,
+      expected_hours_per_week: data.expectedHoursPerWeek || null,
+      duration_weeks: data.durationWeeks || null,
+      deadline_intensity: data.deadlineIntensity || null,
     })
     .eq('id', projectId);
   if (error) throw error;

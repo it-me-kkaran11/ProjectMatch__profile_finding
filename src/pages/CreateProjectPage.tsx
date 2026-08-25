@@ -32,6 +32,9 @@ export function CreateProjectPage() {
   const [teamSize, setTeamSize] = useState(4);
   const [timeline, setTimeline] = useState('');
   const [availability, setAvailability] = useState('');
+  const [expectedHoursPerWeek, setExpectedHoursPerWeek] = useState(10);
+  const [durationWeeks, setDurationWeeks] = useState(8);
+  const [deadlineIntensity, setDeadlineIntensity] = useState('medium');
   const [roles, setRoles] = useState<string[]>([]);
   const [skillRequirements, setSkillRequirements] = useState<SkillRequirement[]>([]);
   const [skillSearch, setSkillSearch] = useState('');
@@ -83,6 +86,9 @@ export function CreateProjectPage() {
         timeline,
         preferredAvailability: availability,
         preferredRoles: roles,
+        expectedHoursPerWeek,
+        durationWeeks,
+        deadlineIntensity,
         requirements: skillRequirements.map((r) => ({
           skillId: r.skillId,
           requiredProficiency: r.requiredProficiency,
@@ -159,6 +165,12 @@ export function CreateProjectPage() {
               <label className="label">Timeline</label>
               <input value={timeline} onChange={(e) => setTimeline(e.target.value)} placeholder="e.g. 8 weeks" className="input" required />
             </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div><label className="label">Expected hours / week</label><input type="number" min="1" value={expectedHoursPerWeek} onChange={(e) => setExpectedHoursPerWeek(Number(e.target.value))} className="input" /></div>
+            <div><label className="label">Duration (weeks)</label><input type="number" min="1" value={durationWeeks} onChange={(e) => setDurationWeeks(Number(e.target.value))} className="input" /></div>
+            <div><label className="label">Deadline intensity</label><select value={deadlineIntensity} onChange={(e) => setDeadlineIntensity(e.target.value)} className="input appearance-none"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">

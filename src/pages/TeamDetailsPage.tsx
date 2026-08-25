@@ -11,6 +11,7 @@ import { cn } from '@/utils/cn';
 import type { Student, Team } from '@/types';
 import type { ProjectRequirement } from '@/types';
 import { TeamCoverageAnalyzer } from '@/components/TeamCoverageAnalyzer';
+import { TeamResilienceChemistry } from '@/components/TeamResilienceChemistry';
 
 const statusStyles: Record<string, string> = {
   Recruiting: 'bg-brand-50 text-brand-700',
@@ -179,6 +180,7 @@ export function TeamDetailsPage({ id }: { id: string }) {
       <div className="mt-6">
         <TeamCoverageAnalyzer members={students.filter((student) => team.members.some((member) => member.studentId === student.id))} requirements={requirements} />
       </div>
+      <div className="mt-6"><TeamResilienceChemistry members={students.filter((student) => team.members.some((member) => member.studentId === student.id))} requirements={requirements} /></div>
     </PageContainer>
   );
 }

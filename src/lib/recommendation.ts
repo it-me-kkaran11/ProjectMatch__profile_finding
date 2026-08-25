@@ -1,4 +1,5 @@
 import type { Student, Project, ProjectRequirement, UserSkillDisplay, WorkStyle } from '@/types';
+import { getSkillMatch } from '@/lib/teamAnalysis';
 
 // ============ Weights ============
 export const WEIGHTS = {
@@ -64,11 +65,14 @@ function scoreSkillMatch(student: Student, requirements: ProjectRequirement[]): 
     totalWeight += importanceWeight;
 
     const studentSkill = skillMap.get(req.skillName);
-    if (studentSkill) {
+    const adjacentMatch = studentSkill ? null : getSkillMatch(student, req);
+    if (studentSkill || adjacentMatch) {
       // Proficiency ratio: how close to required proficiency
-      const profRatio = Math.min(1, studentSkill.proficiency / req.requiredProficiency);
+      const profRatio = studentSkill
+        ? Math.min(1, studentSkill.proficiency / req.requiredProficiency)
+        : (adjacentMatch?.credit ?? 0);
       earnedWeight += importanceWeight * profRatio;
-      matched.push(req.skillName);
+      matched.push(studentSkill ? req.skillName : `${adjacentMatch?.skill} (${adjacentMatch?.kind.toLowerCase()})`);
     } else {
       missing.push(req.skillName);
     }

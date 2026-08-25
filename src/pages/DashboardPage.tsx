@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNav } from '@/nav';
 import { useAuth } from '@/lib/auth';
-import { fetchAllProjects, fetchAllStudents, fetchTeamsForUser } from '@/lib/db';
+import { fetchAllProjects, fetchAllStudents, fetchProjectById, fetchTeamsForUser, joinProject } from '@/lib/db';
 import { PageContainer, SectionHeader, StatCard } from '@/components/Layout';
 import { ProjectCard } from '@/components/ProjectCard';
 import { StudentCard } from '@/components/StudentCard';
 import { cn } from '@/utils/cn';
 import type { Project, Student, Team } from '@/types';
+import type { ProjectRequirement } from '@/types';
+import { OpportunityMatches } from '@/components/OpportunityRiskPanels';
 
 export function DashboardPage() {
   const { navigate } = useNav();
@@ -15,16 +17,20 @@ export function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [opportunityProjects, setOpportunityProjects] = useState<{ project: Project; requirements: ProjectRequirement[] }[]>([]);
+  const [requestMessage, setRequestMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     Promise.all([fetchAllProjects(), fetchAllStudents(), fetchTeamsForUser(user.id)])
-      .then(([projectData, studentData, teamData]) => {
+      .then(async ([projectData, studentData, teamData]) => {
+        const details = await Promise.all(projectData.map((project) => fetchProjectById(project.id)));
         setProjects(projectData);
         setStudents(studentData);
         setTeams(teamData);
+        setOpportunityProjects(details.filter((detail): detail is NonNullable<typeof detail> => detail !== null).map((detail) => ({ project: detail.project, requirements: detail.requirements })));
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load dashboard'))
       .finally(() => setLoading(false));
@@ -37,6 +43,16 @@ export function DashboardPage() {
   const skillGaps = teams.flatMap((team) => team.missingSkills.map((skill) => ({ id: `${team.id}-${skill}`, teamName: team.name, skill, severity: 'High' as const, suggestedStudents: 0 })));
   const recommendedProjects = [...projects].sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
   const recommendedStudents = [...students].filter((s) => s.id !== user?.id).sort((a, b) => b.matchScore - a.matchScore).slice(0, 4);
+  const currentStudent = students.find((student) => student.id === user?.id);
+  const handleOpportunityRequest = async (projectId: string) => {
+    if (!user) return;
+    try {
+      await joinProject(projectId, user.id);
+      setRequestMessage('Participation request sent. The project owner can review it from Project Details.');
+    } catch (err) {
+      setRequestMessage(err instanceof Error ? err.message : 'Unable to send participation request.');
+    }
+  };
 
   return (
     <PageContainer>
@@ -125,6 +141,8 @@ export function DashboardPage() {
           {recommendedProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
         </div>
       </section>
+
+      {currentStudent && <div className="mb-10"><OpportunityMatches student={currentStudent} projects={opportunityProjects} onRequest={handleOpportunityRequest} />{requestMessage && <p className="mt-3 rounded-xl bg-brand-50 p-3 text-sm text-brand-700">{requestMessage}</p>}</div>}
 
       {/* Two column: Recommended Students + Skill Gaps */}
       <div className="grid lg:grid-cols-3 gap-6 mb-10">

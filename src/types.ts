@@ -61,6 +61,11 @@ export interface Student {
   preferredRoles: Role[];
   availability: Availability;
   workStyle: WorkStyle;
+  communicationPreference?: 'asynchronous' | 'frequent discussion' | 'mixed';
+  collaborationPreference?: 'independent' | 'collaborative' | 'mixed';
+  leadershipPreference?: 'prefer leading' | 'shared leadership' | 'prefer specialist role';
+  availableHoursPerWeek?: number;
+  preferredProjectDurationWeeks?: number;
   experience: ExperienceItem[];
   projects: string[];
   matchScore: number;
@@ -73,6 +78,8 @@ export interface UserSkillDisplay {
   proficiency: ProficiencyLevel;
   yearsExperience: number;
   evidenceStatus: EvidenceStatus;
+  projectEvidenceCount?: number;
+  portfolioEvidenceCount?: number;
 }
 
 export interface ExperienceItem {
@@ -102,6 +109,9 @@ export interface Project {
   teamSize: number;
   currentMembers: number;
   timeline: string;
+  expectedHoursPerWeek?: number;
+  durationWeeks?: number;
+  deadlineIntensity?: 'low' | 'medium' | 'high';
   availabilityReq: Availability;
   ownerId: string;
   ownerName: string;

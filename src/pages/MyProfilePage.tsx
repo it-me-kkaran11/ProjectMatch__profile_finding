@@ -76,6 +76,11 @@ export function MyProfilePage() {
         interests: editData.interests,
         preferred_roles: editData.preferred_roles,
         work_style: editData.work_style,
+        communication_preference: editData.communication_preference,
+        collaboration_preference: editData.collaboration_preference,
+        leadership_preference: editData.leadership_preference,
+        available_hours_per_week: editData.available_hours_per_week,
+        preferred_project_duration_weeks: editData.preferred_project_duration_weeks,
       })
       .eq('id', user.id);
 
@@ -258,6 +263,17 @@ export function MyProfilePage() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className="label">Available hours / week</label><input type="number" min="0" value={editData.available_hours_per_week ?? ''} onChange={(e) => setEditData({ ...editData, available_hours_per_week: e.target.value ? Number(e.target.value) : null })} className="input" /></div>
+                <div><label className="label">Preferred project duration (weeks)</label><input type="number" min="1" value={editData.preferred_project_duration_weeks ?? ''} onChange={(e) => setEditData({ ...editData, preferred_project_duration_weeks: e.target.value ? Number(e.target.value) : null })} className="input" /></div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div><label className="label">Communication</label><select value={editData.communication_preference ?? ''} onChange={(e) => setEditData({ ...editData, communication_preference: (e.target.value || null) as Profile['communication_preference'] })} className="input appearance-none"><option value="">Not specified</option><option value="asynchronous">Asynchronous</option><option value="frequent discussion">Frequent discussion</option><option value="mixed">Mixed</option></select></div>
+                <div><label className="label">Collaboration</label><select value={editData.collaboration_preference ?? ''} onChange={(e) => setEditData({ ...editData, collaboration_preference: (e.target.value || null) as Profile['collaboration_preference'] })} className="input appearance-none"><option value="">Not specified</option><option value="independent">Independent</option><option value="collaborative">Collaborative</option><option value="mixed">Mixed</option></select></div>
+                <div><label className="label">Leadership</label><select value={editData.leadership_preference ?? ''} onChange={(e) => setEditData({ ...editData, leadership_preference: (e.target.value || null) as Profile['leadership_preference'] })} className="input appearance-none"><option value="">Not specified</option><option value="prefer leading">Prefer leading</option><option value="shared leadership">Shared leadership</option><option value="prefer specialist role">Prefer specialist role</option></select></div>
               </div>
 
               <div>

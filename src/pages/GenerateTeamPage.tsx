@@ -9,6 +9,7 @@ import { generateTeamRecommendations, scoreTeam, simulateChange, type TeamRecomm
 import type { Project, ProjectRequirement, Student } from '@/types';
 import { cn } from '@/utils/cn';
 import { TeamCoverageAnalyzer } from '@/components/TeamCoverageAnalyzer';
+import { TeamResilienceChemistry } from '@/components/TeamResilienceChemistry';
 
 const scoreLabels: { key: keyof TeamRecommendation['scores']; label: string }[] = [
   { key: 'compatibility', label: 'Compatibility' },
@@ -189,6 +190,7 @@ export function GenerateTeamPage({ id }: { id: string }) {
       <div className="mt-6">
         <TeamCoverageAnalyzer members={members} requirements={requirements} />
       </div>
+      <div className="mt-6"><TeamResilienceChemistry members={members} requirements={requirements} project={project} /></div>
     </PageContainer>
   );
 }

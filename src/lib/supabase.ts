@@ -24,6 +24,11 @@ export interface Profile {
   interests: string[];
   preferred_roles: string[];
   work_style: string | null;
+  communication_preference: 'asynchronous' | 'frequent discussion' | 'mixed' | null;
+  collaboration_preference: 'independent' | 'collaborative' | 'mixed' | null;
+  leadership_preference: 'prefer leading' | 'shared leadership' | 'prefer specialist role' | null;
+  available_hours_per_week: number | null;
+  preferred_project_duration_weeks: number | null;
   created_at: string;
   updated_at: string;
 }
