@@ -30,7 +30,7 @@ function AppShell() {
         <div className="card w-full max-w-lg p-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-lg font-800 text-white">PM</div>
           <h1 className="font-display text-2xl font-700 text-ink-900">Connect ProjectMatch to Supabase</h1>
-          <p className="mt-3 text-sm leading-relaxed text-ink-500">The preview is running, but the Supabase environment variables are missing. Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to a local <code>.env</code> file, then restart Vite.</p>
+          <p className="mt-3 text-sm leading-relaxed text-ink-500">The app is running, but its Supabase environment variables are missing. Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in Vercel under Settings, Environment Variables, then redeploy. For local development, add them to <code>.env</code> and restart Vite.</p>
         </div>
       </div>
     );

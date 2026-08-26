@@ -10,3 +10,14 @@
 4. Run `npm install` and `npm run dev`.
 
 The application will show a configuration screen instead of a blank page when the Supabase variables are missing. Authenticated profile discovery requires the final profile-discovery migration.
+
+## Vercel deployment
+
+In the Vercel project, open **Settings -> Environment Variables** and add these variables for the **Production** environment:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Use the values from `.env.example` (or from Supabase Project Settings -> API), then redeploy. Vite embeds `VITE_*` variables during the build, so changing them requires a new deployment.
